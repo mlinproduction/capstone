@@ -6,7 +6,7 @@ SHELL := bash
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 
-CONDA_ROOT = /anaconda3
+CONDA_ROOT = /$(shell which conda | cut -d "/" -f2)
 PIP = $(CONDA_ROOT)/envs/ml_in_prod_capstone/bin/pip
 NOSE = $(CONDA_ROOT)/envs/ml_in_prod_capstone/bin/nosetests
 PYTHON = $(CONDA_ROOT)/envs/ml_in_prod_capstone/bin/python
@@ -32,11 +32,11 @@ setup: .setup_done ## Creates project environment, installs packages and runs te
 # Training
 # *******************************************************************************************************************
 
-DATASET_DEFAULT=train/data/bq-results-20200205-092131-ioej0ewh4vcc_large.csv
+DATASET_DEFAULT=train/data/stackoverflow_posts.csv
 DATASET ?= $(DATASET_DEFAULT)
 
 $(DATASET_DEFAULT):
-	curl -L -o $(DATASET_DEFAULT) ‘https://docs.google.com/uc?export=download&id=1ud6JR2JjkRi-iRrsx8kWj4rPL5BVt5Pd’
+	curl -L -o $(DATASET_DEFAULT) "https://docs.google.com/uc?export=download&id=1ud6JR2JjkRi-iRrsx8kWj4rPL5BVt5Pd"
 
 .PHONY: download ## Downloads the data to train the model
 download: $(DATASET_DEFAULT)
@@ -45,7 +45,7 @@ download: $(DATASET_DEFAULT)
 	python train/run.py data/artefacts ${dataset_filename} conf/train-conf.yml
 
 .PHONY: train
-setup: .training_done ## Trains a model
+train: .training_done ## Trains a model
 
 # *******************************************************************************************************************
 # Prediction / deployment targets
