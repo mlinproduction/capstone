@@ -14,7 +14,7 @@ Before proceeding, please make sure you have
 
 ## Setup
 
-The project environment uses conda environments. To set the project environment (named `ml_in_prod_capsone`), please run
+The project uses conda environments. To set the project environment (named `ml_in_prod_capsone`), please run
 
 ```bash
 make setup
@@ -38,10 +38,8 @@ copy the path to this folder and use it to test or deploy the trained model, see
 ## Deploying or testing a trained model
 
 1. Copy the file `2020/predict/predict.conf.dist` into `2020/predict/predict.conf` and edit the fields to your taste
-2. Activate the conda environment (`conda activate ml_in_prod_capstone`)
-3. `make help` and choose one of the available targets, for instance
+2. `make help` and choose one of the available targets, for instance
 ```bash
-conda activate ml_in_prod_capstone
 make predict-test TEXT="my text"
 ```
 
