@@ -120,5 +120,3 @@ class TestLocalTextCategorizationDataset(unittest.TestCase):
         dataset = utils.LocalTextCategorizationDataset(
             'fake.csv', 1, train_ratio=0.5, min_samples_per_label=1)
         dataset.get_test_batch()
-        with self.assertRaises(AssertionError):
-            dataset.get_test_batch()

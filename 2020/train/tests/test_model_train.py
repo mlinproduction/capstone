@@ -34,9 +34,17 @@ class TestTrain(unittest.TestCase):
     @patch("preprocessing.utils.LocalTextCategorizationDataset.load_dataset", side_effect=load_dataset_mock)
     def test_train(self, _):
 
-        params = {"dense_dim": 64, "epochs": 10, "batch_size": 2}
+        params = {
+            "dense_dim": 64,
+            "epochs": 10,
+            "batch_size": 2,
+            'min_samples_per_label': 1,
+            "verbose": 1,
+            "workers": 1,
+            "use_multiprocessing": False
+        }
 
         with tempfile.TemporaryDirectory() as model_dir:
-            accuracy = run.train(model_dir, 'dummy_dataset_path', params)
+            accuracy, _ = run.train(model_dir, 'dummy_dataset_path', params)
 
         self.assertEqual(accuracy, 1.0)
