@@ -1,6 +1,5 @@
 # This file contains the configuration parameters, used in companion `Makefile`
-
-# Set to path where training artefacts where stored
+# The path MUST be relative to the project's root (capstone/2020/)
 ARTEFACTS_PATH =
 
 # Text you want to use for testing
