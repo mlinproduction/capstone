@@ -14,6 +14,12 @@ parameters to your taste
 
 2. Download the data
 
+```bash
+cd train/data
+curl -L -o 'bq-results-20200205-092131-ioej0ewh4vcc_large.csv' 'https://docs.google.com/uc?export=download&id=1ud6JR2JjkRi-iRrsx8kWj4rPL5BVt5Pd'
+cd ../..
+```
+
 3. Run the training job using the commands:
 ```bash
 conda activate ml_in_prod_capstone
@@ -39,7 +45,7 @@ make predict-test TEXT="my text"
 musts:
 -1: revert env variable change: x
 0- move project to github repo: x
-0.5 - make datafile available from google cloud and have makefile command to download it:
+0.5 - make datafile available from google cloud and have makefile command to download it: x
 1- conda env setup (global for all modules)
 2- make predict tests work
 3- Fix Dockerfile and make it work for train & inference
