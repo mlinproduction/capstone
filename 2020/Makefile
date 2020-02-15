@@ -6,7 +6,10 @@ SHELL := bash
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 
+# Warning: The following may not work, depending on conda is installed,
+# you may need to edit this manually to have the correct CONDA_ROOT
 CONDA_ROOT = /$(shell which conda | cut -d "/" -f2)
+
 PIP = $(CONDA_ROOT)/envs/ml_in_prod_capstone/bin/pip
 NOSE = $(CONDA_ROOT)/envs/ml_in_prod_capstone/bin/nosetests
 PYTHON = $(CONDA_ROOT)/envs/ml_in_prod_capstone/bin/python
