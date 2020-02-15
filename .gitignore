@@ -30,6 +30,7 @@ MANIFEST
 
 .python-version
 .vscode
+.idea
 
 *.ipynb_checkpoints*
 __pycache__
