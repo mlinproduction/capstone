@@ -4,9 +4,8 @@ from predict.run import TextPredictionModel
 
 class TextPredictionModelTest(unittest.TestCase):
 
-    def test_predict():
-        pass
-
+    @unittest.skip("TODO")
+    def test_predict(self):
         #TODO: Fix this:
         model = TextPredictionModel()
         text = 'ruby on rails: how to change BG color of options in select list, ruby-on-rails'

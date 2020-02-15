@@ -59,3 +59,4 @@ Disclaimer:
 - return proper responses with text/json content-type (https://tedboy.github.io/flask/quickstart/quickstart9.html)
 - use proper WSGI instead of Flask's dev server (https://flask.palletsprojects.com/en/1.1.x/deploying/) 
 - handle errors gracefully so that a proper response is returned instead of HTML with the stacktrace
+- dev / prod environments usually are different and hence are managed through different Yamls

@@ -31,6 +31,7 @@ MANIFEST
 .python-version
 .vscode
 .idea
+.DS_Store
 
 *.ipynb_checkpoints*
 __pycache__
