@@ -12,23 +12,14 @@
 1. Setup the training parameters, by copying `conf/train-conf.yml.dist` into `conf/train-conf.yml` and editing the
 parameters to your taste
 
-2. Download the data
-
-```bash
-cd train/data
-curl -L -o 'bq-results-20200205-092131-ioej0ewh4vcc_large.csv' 'https://docs.google.com/uc?export=download&id=1ud6JR2JjkRi-iRrsx8kWj4rPL5BVt5Pd'
-cd ../..
-```
-
-3. Run the training job using the commands:
+2. Run the downloading data and training jobs using the commands:
 ```bash
 conda activate ml_in_prod_capstone
-python train/run.py data/artefacts ${dataset_filename} conf/train-conf.yml
+make train
 ```
 where you will need to replace `${dataset_filename}` by the location of the dataset you want to train on.
 
-4. The script will generate the artefacts in a folder within `data/artefacts` with name equal to a timestamp. You can now
-copy the path to this folder and use it to test or deploy the trained model, see section below.
+3. The script will generate the artefacts in a folder within `data/artefacts` with name equal to a timestamp. You can now copy the path to this folder and use it to test or deploy the trained model, see section below.
 
 ## Deploying or testing a trained model
 
