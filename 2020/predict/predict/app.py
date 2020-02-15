@@ -2,6 +2,7 @@ import json
 import argparse
 import logging
 import time
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -10,9 +11,17 @@ from flask import Flask, request
 from run import TextPredictionModel
 
 parser = argparse.ArgumentParser()
-parser.add_argument("artefacts_path", type=str, help="path to trained model artefacts")
+parser.add_argument("--artefacts_path", type=str, help="path to trained model artefacts")
 parser.add_argument("--port", type=int, default=5000, help="port")
 args = parser.parse_args()
+
+if args.artefacts_path is None:
+    if os.getenv('ARTEFACTS_PATH') is not None:
+        args.artefacts_path = os.getenv('ARTEFACTS_PATH')
+    else:
+        raise ValueError(
+            "Please provide the `artefacts_path` as a command line argument or"
+            " as an environment variable `ARTEFACTS_PATH`")
 
 app = Flask(__name__)
 

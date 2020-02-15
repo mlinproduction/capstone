@@ -30,6 +30,7 @@ MANIFEST
 
 .python-version
 .vscode
+.idea
 
 *.ipynb_checkpoints*
 __pycache__
@@ -37,3 +38,4 @@ __pycache__
 models
 artefacts
 *.csv
+*.conf

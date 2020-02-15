@@ -1,0 +1,7 @@
+# This file contains the configuration parameters, used in companion `Makefile`
+
+# Set to path where training artefacts where stored
+ARTEFACTS_PATH =
+
+# Text you want to use for testing
+TEST_TEXT = ruby on rails: how to change BG color of options in select list, ruby-on-rails
