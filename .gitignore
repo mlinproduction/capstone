@@ -35,5 +35,5 @@ MANIFEST
 __pycache__
 *.egg-info
 models
-artifacts
+artefacts
 *.csv
