@@ -30,8 +30,10 @@ parameters to your taste
 ```bash
 make train
 ```
-where you will need to replace `${dataset_filename}` by the location of the dataset you want to train on.
-
+which will download the dataset and train the model. Optionally, you can also pass it the path to the dataset:
+```bash
+make train DATASET=/path/to/dataset
+```
 3. The script will generate the artefacts in a folder within `data/artefacts` with name equal to a timestamp. You can now
 copy the path to this folder and use it to test or deploy the trained model, see section below.
 
@@ -43,15 +45,9 @@ copy the path to this folder and use it to test or deploy the trained model, see
 make predict-test TEXT="my text"
 ```
 
-## TODOS
+## Disclaimer
 
-nice to have:
-1- Cache app endpoints to avoid recomputation for same input
-2- Ser/Deser in same class
-3- use JSON for POST so that we can pass several text inputs at once
-
-
-Disclaimer:
+This is an educational project. To that end, we have taken a number of shortcuts that would not be appropriate for a production deployment, for instance:
 - dockerfiles should be separate for train/inference
 - embedding info should be serialized with model to ensure compatibility
 - return proper responses with text/json content-type (https://tedboy.github.io/flask/quickstart/quickstart9.html)
