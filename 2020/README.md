@@ -9,9 +9,14 @@
 ## Training a model
 
 
-## Deploying a trained model
+## Deploying or testing a trained model
 
-
+1. Copy the file `2020/predict/predict.conf.dist` into `2020/predict/predict.conf` and edit the fields to your taste
+2. `cd 2020/predict`
+3. `make help` and choose one of the available targets, for instance
+```bash
+make predict-test TEXT="my text"
+```
 
 ## TODOS
 
