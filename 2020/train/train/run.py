@@ -58,7 +58,7 @@ def train(model_path, dataset_path, params):
     with open(os.path.join(artefacts_path, "train_output.json"), "w") as f:
         json.dump(serializable_hist, f)
 
-    return scores[1]
+    return scores[1], artefacts_path
 
 
 if __name__ == "__main__":
