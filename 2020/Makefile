@@ -45,7 +45,7 @@ $(DATASET_DEFAULT):
 download: $(DATASET_DEFAULT)
 
 .training_done: $(DATASET) .setup_done
-	$(PYTHON) train/run.py data/artefacts ${dataset_filename} conf/train-conf.yml
+	$(PYTHON) train/train/run.py data/artefacts ${dataset_filename} conf/train-conf.yml
 
 .PHONY: train
 train: .training_done ## Trains a model
