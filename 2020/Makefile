@@ -27,6 +27,7 @@ PYTHON = $(CONDA_ROOT)/envs/ml_in_prod_capstone/bin/python
 	$(NOSE) -v preprocessing/tests
 	$(NOSE) -v train/tests
 	$(NOSE) -v predict/tests
+	touch .setup_done
 
 .PHONY: setup
 setup: .setup_done ## Creates project environment, installs packages and runs tests
