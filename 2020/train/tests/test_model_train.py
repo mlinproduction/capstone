@@ -20,23 +20,40 @@ def load_dataset_mock(filename, min_samples_per_label):
         "Is it possible to execute the procedure of a function in the scope of the caller?",
         "ruby on rails: how to change BG color of options in select list, ruby-on-rails",
     ]
-    tags = ["php", "ruby-on-rails", "php", "ruby-on-rails", "php", "ruby-on-rails", "php", "ruby-on-rails",
-            "php", "ruby-on-rails"]
+    tags = [
+        "php",
+        "ruby-on-rails",
+        "php",
+        "ruby-on-rails",
+        "php",
+        "ruby-on-rails",
+        "php",
+        "ruby-on-rails",
+        "php",
+        "ruby-on-rails",
+    ]
 
-    return pd.DataFrame({
-        'title': titles,
-        'tag_name': tags
-    })
+    return pd.DataFrame({"title": titles, "tag_name": tags})
 
 
 class TestTrain(unittest.TestCase):
-
-    @patch("preprocessing.utils.LocalTextCategorizationDataset.load_dataset", side_effect=load_dataset_mock)
+    @patch(
+        "preprocessing.utils.LocalTextCategorizationDataset.load_dataset",
+        side_effect=load_dataset_mock,
+    )
     def test_train(self, _):
 
-        params = {"dense_dim": 64, "epochs": 10, "batch_size": 2}
+        params = {
+            "dense_dim": 64,
+            "epochs": 10,
+            "batch_size": 2,
+            "min_samples_per_label": 10,
+            "verbose": 1,
+            "workers": 1,
+            "use_multiprocessing": False,
+        }
 
         with tempfile.TemporaryDirectory() as model_dir:
-            accuracy = run.train(model_dir, 'dummy_dataset_path', params)
+            accuracy = run.train(model_dir, "dummy_dataset_path", params)
 
         self.assertEqual(accuracy, 1.0)

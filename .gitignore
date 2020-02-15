@@ -40,3 +40,5 @@ artefacts
 *.csv
 *.conf
 
+.pytest_cache
+
