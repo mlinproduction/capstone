@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(format="%(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 
-    model = TextPredictionModel(args.artefacts_path)
+    model = TextPredictionModel.from_artefacts(args.artefacts_path)
 
     if args.text is None:
         while True:
