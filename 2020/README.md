@@ -16,9 +16,9 @@
 ## TODOS
 
 musts:
--1: revert env variable change
-0- move project to github repo
-0.5 - make datafile available from 
+-1: revert env variable change:
+0- move project to github repo: x
+0.5 - make datafile available from google cloud and have makefile command to download it:
 1- conda env setup (global for all modules)
 2- make predict tests work
 3- Fix Dockerfile and make it work for train & inference
