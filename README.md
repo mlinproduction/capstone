@@ -1,6 +1,3 @@
 # ML in Production - Capstone 
 
-## Packages
-preprocessing
-model-train
-model-predict
+* [ML In Prod Capstone Project - 2020 edition](2020/)

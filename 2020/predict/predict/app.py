@@ -39,13 +39,11 @@ def predict_tag():
     prediction = model.predict([text])
     logger.info(f"Predictions: {prediction}")
 
-    response = app.response_class(
+    return app.response_class(
         response=json.dumps(prediction),
         status=200,
         mimetype='application/json'
     )
-    return response
-
 
 @app.route("/tag/status/")
 def status():
@@ -57,8 +55,18 @@ def status():
         },
         'created_at': created_at
     }
-    return json.dumps(status)
+    return app.response_class(
+        response=json.dumps(status),
+        status=200,
+        mimetype='application/json'
+    )
 
 if __name__ == "__main__":
-    logging.basicConfig(format="%(name)s - %(levelname)s - %(message)s", level=logging.INFO)
+    stream_handler = logging.StreamHandler(stream=None)
+    file_handler = logging.FileHandler('app.log')
+
+    logging.basicConfig(format="%(name)s - %(levelname)s - %(message)s",
+                        level=logging.INFO,
+                        handlers=[stream_handler, file_handler])
+
     app.run(debug=True, host="0.0.0.0", port=args.port)
