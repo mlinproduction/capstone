@@ -30,6 +30,7 @@ logger.info(f"Loading model from: `{args.artefacts_path}`")
 model = TextPredictionModel.from_artefacts(args.artefacts_path)
 created_at = time.strftime('%Y-%m-%d-%H-%M-%S')
 
+
 @app.route("/tag/predict/", methods=["POST"])
 def predict_tag():
 
@@ -51,7 +52,7 @@ def status():
     status = {
         'model': {
             'params': model.params,
-            'labels_index': model.labels_index,
+            'labels_to_index': model.labels_to_index,
             'artefacts_path': args.artefacts_path
         },
         'created_at': created_at
