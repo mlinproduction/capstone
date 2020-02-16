@@ -41,3 +41,4 @@ models
 artefacts
 *.csv
 *.conf
+*.log
