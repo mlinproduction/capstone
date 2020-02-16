@@ -1,25 +1,29 @@
-FROM python:3.7.1
+FROM continuumio/miniconda:latest
 
-# Add model
-COPY ./trained_model /model
+COPY environment.yml /lib/environment.yml
+COPY ./preprocessing /lib/preprocessing
+COPY ./train /lib/train
+COPY ./predict /lib/predict
 
-# First copy requirements to avoid pip installing libraries each time you change something
-COPY ./preprocessing/requirements.txt /libraries/preprocessing/requirements.txt
-COPY ./predict/requirements.txt /app/requirements.txt
+RUN /opt/conda/bin/conda env create -f /lib/environment.yml
 
-RUN pip install --upgrade pip
-RUN pip install -r /libraries/preprocessing/requirements.txt
-RUN pip install -r /app/requirements.txt
+RUN echo "source activate ml_in_prod_capstone" > ~/.bashrc
+ENV PATH /opt/conda/envs/ml_in_prod_capstone/bin:$PATH
 
-# Add libraries - things you change more often should go at the end of the Dockerfile 
-# in order to make its build more agile
-COPY ./preprocessing /libraries/preprocessing
-COPY ./predict /app
+RUN /opt/conda/envs/ml_in_prod_capstone/bin/pip install -e /lib/preprocessing/
+RUN /opt/conda/envs/ml_in_prod_capstone/bin/pip install -e /lib/train/
+RUN /opt/conda/envs/ml_in_prod_capstone/bin/pip install -e /lib/predict/
 
-RUN pip install -e /libraries/preprocessing/
-RUN pip install -e /app/
+# clean up unused stuff
+RUN /opt/conda/bin/conda clean -afy
+
+# Copy the model into the /model folder
+ARG artefacts_path
+COPY $artefacts_path /model
+
 
 ENV MLINPROD_MODEL_PATH /model
 ENV FLASK_APP /app/predict/app.py
 ENV FLASK_ENV development
-CMD ["flask", "run", "--host=0.0.0.0"]
+
+CMD ["python", "/lib/predict/predict/app.py", "--artefacts_path=/model"]

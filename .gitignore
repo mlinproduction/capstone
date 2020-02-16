@@ -32,6 +32,7 @@ MANIFEST
 .vscode
 .idea
 .DS_Store
+.setup_done
 
 *.ipynb_checkpoints*
 __pycache__

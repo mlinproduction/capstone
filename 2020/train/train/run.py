@@ -14,30 +14,33 @@ from preprocessing.utils import LocalTextCategorizationDataset
 logger = logging.getLogger(__name__)
 
 
-def train(model_path, dataset_path, params):
+def train(model_path, dataset_path, train_params, add_timestamp):
 
-    artefacts_path = os.path.join(model_path, time.strftime('%Y-%m-%d-%H-%M-%S'))
+    if add_timestamp:
+        artefacts_path = os.path.join(model_path, time.strftime('%Y-%m-%d-%H-%M-%S'))
+    else:
+        artefacts_path = model_path
 
     dataset = LocalTextCategorizationDataset(
         dataset_path,
-        batch_size=params['batch_size'],
-        min_samples_per_label=params['min_samples_per_label'],
+        batch_size=train_params['batch_size'],
+        min_samples_per_label=train_params['min_samples_per_label'],
         preprocess_text=embed)
 
     logger.info(dataset)
 
     model = Sequential()
-    model.add(Dense(params['dense_dim'], activation='relu'))
+    model.add(Dense(train_params['dense_dim'], activation='relu'))
     model.add(Dense(dataset.get_num_labels(), activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='sgd', metrics=['accuracy'])
 
     train_history = model.fit(
         dataset.get_train_sequence(),
         validation_data=dataset.get_test_sequence(),
-        epochs=params['epochs'],
-        verbose=params['verbose'],
-        workers=params['workers'],
-        use_multiprocessing=params['use_multiprocessing']
+        epochs=train_params['epochs'],
+        verbose=train_params['verbose'],
+        workers=train_params['workers'],
+        use_multiprocessing=train_params['use_multiprocessing']
     )
 
     scores = model.evaluate_generator(dataset.get_test_sequence(), verbose=0)
@@ -48,7 +51,7 @@ def train(model_path, dataset_path, params):
     model.save(os.path.join(artefacts_path, "model.h5"))
 
     with open(os.path.join(artefacts_path, "params.json"), "w") as f:
-        json.dump(params, f)
+        json.dump(train_params, f)
 
     with open(os.path.join(artefacts_path, 'labels_index.json'), 'w') as f:
         json.dump(dataset.get_label_to_index_map(), f)
@@ -69,12 +72,15 @@ if __name__ == "__main__":
     parser.add_argument("artefacts_path", help="Folder where training artefacts will be persisted")
     parser.add_argument("dataset_path", help="Path to training dataset")
     parser.add_argument("config_path", help="Path to Yaml file specifying training parameters")
+    parser.add_argument("--add_timestamp", action='store_true',
+                        help="Create artefacts in a subfolder with name equal to execution timestamp")
+
     args = parser.parse_args()
 
     with open(args.config_path, 'r') as config_f:
-        params = yaml.safe_load(config_f.read())
+        train_params = yaml.safe_load(config_f.read())
 
-    logger.info(f"Training model with parameters: {params}")
+    logger.info(f"Training model with parameters: {train_params}")
 
-    train(args.artefacts_path, args.dataset_path, params)
+    train(args.artefacts_path, args.dataset_path, train_params, args.add_timestamp)
 

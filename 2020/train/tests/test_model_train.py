@@ -45,6 +45,6 @@ class TestTrain(unittest.TestCase):
         }
 
         with tempfile.TemporaryDirectory() as model_dir:
-            accuracy, _ = run.train(model_dir, 'dummy_dataset_path', params)
+            accuracy, _ = run.train(model_dir, 'dummy_dataset_path', params, True)
 
         self.assertEqual(accuracy, 1.0)

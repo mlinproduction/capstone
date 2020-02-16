@@ -14,6 +14,8 @@ PIP = $(CONDA_ROOT)/envs/ml_in_prod_capstone/bin/pip
 NOSE = $(CONDA_ROOT)/envs/ml_in_prod_capstone/bin/nosetests
 PYTHON = $(CONDA_ROOT)/envs/ml_in_prod_capstone/bin/python
 
+ARTEFACTS_PATH = train/data/artefacts/final/
+
 # *******************************************************************************************************************
 # Setup
 # *******************************************************************************************************************
@@ -29,52 +31,67 @@ PYTHON = $(CONDA_ROOT)/envs/ml_in_prod_capstone/bin/python
 	$(NOSE) -v predict/tests
 	touch .setup_done
 
+.docker_build: environment.yml $(ARTEFACTS_PATH)
+	docker build -t ml_in_prod_capstone:v1.0 . --build-arg artefacts_path=$(ARTEFACTS_PATH)
+
 .PHONY: setup
-setup: .setup_done ## Creates project environment, installs packages and runs tests
+setup: .setup_done .docker_build ## Creates project environment, installs packages, runs tests and builds the docker image
+
+.PHONY: test
+test: ## Runs package tests
+	$(NOSE) -v preprocessing/tests
+	$(NOSE) -v train/tests
+	$(NOSE) -v predict/tests
 
 # *******************************************************************************************************************
 # Training
 # *******************************************************************************************************************
 
-DATASET_DEFAULT=train/data/stackoverflow_posts.csv
+DATASET_DEFAULT = train/data/stackoverflow_posts.csv
 DATASET ?= $(DATASET_DEFAULT)
 
 $(DATASET_DEFAULT):
 	curl -L -o $(DATASET_DEFAULT) "https://docs.google.com/uc?export=download&id=1ud6JR2JjkRi-iRrsx8kWj4rPL5BVt5Pd"
 
-.PHONY: download ## Downloads the data to train the model
+.PHONY: download ## Downloads the stackoverflow (post, tag) data to train the model
 download: $(DATASET_DEFAULT)
 
-.training_done: $(DATASET) .setup_done
-	$(PYTHON) train/train/run.py data/artefacts $(DATASET) train/conf/train-conf.yml
+$(ARTEFACTS_PATH): $(DATASET) .setup_done train/train/run.py
+	echo $(ARTEFACTS_PATH)
+	$(PYTHON) train/train/run.py $(ARTEFACTS_PATH) $(DATASET) train/conf/train-conf.yml
 
 .PHONY: train
-train: .training_done ## Trains a model
+train: $(ARTEFACTS_PATH) ## Trains a model to predict tags for stack overflow posts
 
 # *******************************************************************************************************************
 # Prediction / deployment targets
 # *******************************************************************************************************************
 
-include predict/predict.conf
+# Text you want to use for testing, provide via `make CMD TEXT="abcd"`
+TEXT ?= ruby on rails: how to change BG color of options in select list, ruby-on-rails
 
-TEXT ?= $(TEST_TEXT)
-
-predict-test: .setup_done ## Calling predict from terminal
+predict-test: .setup_done $(ARTEFACTS_PATH) ## Calling predict from terminal
 	$(PYTHON) predict/predict/run.py $(ARTEFACTS_PATH) --text="$(TEXT)"
 
-flask-server-local: .setup_done ## Starts flask server and passes model artefacts via en environment variable
+flask-server-local: .setup_done $(ARTEFACTS_PATH) ## Starts flask server and passes model artefacts through an environment variable
 	ARTEFACTS_PATH=$(ARTEFACTS_PATH) python predict/predict/app.py
 
 request-test: ## Make a test POST request to flask server (needs to be running, for example having executed flask-server-local)
 	curl -v http://0.0.0.0:5000/tag/predict/ -d text="$(TEXT)"
 
-flask-server: ## Run Flask app through its Docker container
-	docker run -p 5000:5000 predict
+flask-server-docker: .docker_build ## Run Flask app through its Docker container
+	docker run -p 5000:5000  ml_in_prod_capstone:v1.0
 
-flask-server-debug: ## Run Flask app through its Docker container in DEBUG mode
-	docker run -it -p 5000:5000 -v "$PWD":/libraries/app predict
+flask-server-docker-debug: .docker_build ## Run Flask app through its Docker container in DEBUG mode
+	docker run -it -p 5000:5000 -v ml_in_prod_capstone:v1.0
 
 .DEFAULT_GOAL := help
 .PHONY: help
-help:
+help: ## Displays makefile commands
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' Makefile | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-16s\033[0m %s\n", $$1, $$2}'
+
+_all: flask-server-local flask-server-docker
+
+.PHONY: graph
+graph:  ## plots makefile dependency graph into `makefile_graph.png`
+	$(MAKE) _all --dry-run -Bnd | make2graph | dot -Tpng -o makefile_graph.png

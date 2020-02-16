@@ -8,7 +8,7 @@ in Barcelona, Spain.
 
 Before proceeding, please make sure you have 
 
-* conda (we recommend installing the [miniconda](https://docs.conda.io/en/latest/miniconda.html) version)
+* conda (we recommend installing [miniconda](https://docs.conda.io/en/latest/miniconda.html))
 * curl
 * GNU make
 

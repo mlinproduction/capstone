@@ -1,9 +1,11 @@
 import unittest
 import tempfile
 from unittest.mock import patch
+
+import pandas as pd
+
 from predict.run import TextPredictionModel
 from train import run
-import pandas as pd
 
 
 def load_dataset_mock(filename, min_samples_per_label):
@@ -54,7 +56,7 @@ class TextPredictionModelTest(unittest.TestCase):
         }
 
         with tempfile.TemporaryDirectory() as model_dir:
-            _, artefacts_path = run.train(model_dir, "dummy_dataset_path", params)
+            _, artefacts_path = run.train(model_dir, "dummy_dataset_path", params, True)
 
             model = TextPredictionModel.from_artefacts(artefacts_path)
             text = 'ruby on rails: how to change BG color of options in select list, ruby-on-rails'
