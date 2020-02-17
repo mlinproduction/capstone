@@ -50,8 +50,15 @@ class CustomGoogleCloudStorageDownloadDirectoryOperator(BaseOperator):
             google_cloud_storage_conn_id=self.google_cloud_storage_conn_id,
             delegate_to=self.delegate_to
         )
+
+        downloaded_files = []
         for object in hook.list(bucket=self.bucket, prefix=self.prefix):
             self.log.info('Downloading object: %s', object)
+            filename = os.path.join(self.directory, object.replace('/', '_'))
             hook.download(bucket=self.bucket,
                           object=object,
-                          filename=os.path.join(self.directory, object.replace('/', '_')))
+                          filename=filename)
+            downloaded_files.append(filename)
+
+        task_instance = context['task_instance']
+        task_instance.xcom_push('downloaded_files', downloaded_files)

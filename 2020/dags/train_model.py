@@ -16,7 +16,8 @@ default_args = {
     'dataset_id': Variable.get('bigquery_dataset_id'),
     'write_disposition': 'WRITE_TRUNCATE',
     'allow_large_results': True,
-    'use_legacy_sql': False
+    'use_legacy_sql': False,
+    'google_cloud_storage_conn_id': Variable.get('google_cloud_storage_conn_id')
 }
 
 
@@ -148,7 +149,7 @@ train_export_to_cloud_storage = CustomBigQueryToCloudStorageOperator(
     task_id='train_export_to_cloud_storage',
     dag=dag,
     source_project_dataset_table="{{ task_instance.xcom_pull(task_ids='train_construct_table', key='table_uri') | replace('`', '') }}",
-    destination_cloud_storage_uris=[os.path.join(Variable.get('gcs_working_path'), 'train-table', '*')],
+    destination_cloud_storage_uris=['gs://' + os.path.join(Variable.get('gcs_bucket'), Variable.get('gcs_prefix'), 'train-table', '*')],
     compression='NONE',
     export_format='CSV')
 
@@ -157,9 +158,28 @@ test_export_to_cloud_storage = CustomBigQueryToCloudStorageOperator(
     task_id='test_export_to_cloud_storage',
     dag=dag,
     source_project_dataset_table="{{ task_instance.xcom_pull(task_ids='test_construct_table', key='table_uri') | replace('`', '') }}",
-    destination_cloud_storage_uris=[os.path.join(Variable.get('gcs_working_path'), 'test-table', '*')],
+    destination_cloud_storage_uris=['gs://' + os.path.join(Variable.get('gcs_bucket'), Variable.get('gcs_prefix'), 'test-table', '*')],
     compression='NONE',
     export_format='CSV')
+
+
+# *****************************************************************************
+# DOWNLOAD TO LOCAL
+# *****************************************************************************
+train_download_to_local = CustomGoogleCloudStorageDownloadDirectoryOperator(
+    task_id='train_download_to_local',
+    dag=dag,
+    bucket=Variable.get('gcs_bucket'),
+    prefix=os.path.join(Variable.get('gcs_prefix'), 'train-table/'),
+    directory=Variable.get('local_working_dir'))
+
+
+test_download_to_local = CustomGoogleCloudStorageDownloadDirectoryOperator(
+    task_id='test_download_to_local',
+    dag=dag,
+    bucket=Variable.get('gcs_bucket'),
+    prefix=os.path.join(Variable.get('gcs_prefix'), 'test-table/'),
+    directory=Variable.get('local_working_dir'))
 
 
 # *****************************************************************************
@@ -172,3 +192,5 @@ test_export_to_cloud_storage = CustomBigQueryToCloudStorageOperator(
 [test_flatten_tags, test_titles_sensor] >> test_construct_table
 train_construct_table >> train_export_to_cloud_storage
 test_construct_table >> test_export_to_cloud_storage
+train_export_to_cloud_storage >> train_download_to_local
+test_export_to_cloud_storage >> test_download_to_local
