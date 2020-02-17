@@ -3,11 +3,12 @@ WITH
   SELECT
     *
   FROM
-    {{ task_instance.xcom_pull(task_ids='train_tags_sensor', key='table_uri') }}),
+    {{ task_instance.xcom_pull(task_ids='train_tagged_posts_sensor', key='table_uri') }}),
   tags AS (
   SELECT
     *
-  FROM {{ task_instance.xcom_pull(task_ids='tags_table_sensor', key='table_uri') }}),
+  FROM
+    {{ task_instance.xcom_pull(task_ids='tags_table_sensor', key='table_uri') }}),
   flattened_tags AS (
   SELECT
     tag

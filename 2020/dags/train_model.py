@@ -6,6 +6,7 @@ from custom_airflow.operators import CustomGoogleCloudStorageDownloadDirectoryOp
 from custom_airflow.sensors import (BigQueryWildcardTableSuffixSensor,
                                     CustomBigQueryTableSensor)
 from airflow.models import Variable
+from jinja2 import Template
 
 
 default_args = {
@@ -44,8 +45,8 @@ train_titles_sensor = BigQueryWildcardTableSuffixSensor(
 # *****************************************************************************
 # TRAIN TAGS SENSOR
 # *****************************************************************************
-train_tags_sensor = BigQueryWildcardTableSuffixSensor(
-    task_id='train_tags_sensor',
+train_tagged_posts_sensor = BigQueryWildcardTableSuffixSensor(
+    task_id='train_tagged_posts_sensor',
     dag=dag,
     table_id='stackoverflow_posts_tags_*',
     initial_suffix='{{ dag_run.conf["initial_train_pdate"] }}',
@@ -68,8 +69,8 @@ test_titles_sensor = BigQueryWildcardTableSuffixSensor(
 # *****************************************************************************
 # TEST TAGS SENSOR
 # *****************************************************************************
-test_tags_sensor = BigQueryWildcardTableSuffixSensor(
-    task_id='test_tags_sensor',
+test_tagged_posts_sensor = BigQueryWildcardTableSuffixSensor(
+    task_id='test_tagged_posts_sensor',
     dag=dag,
     table_id='stackoverflow_posts_tags_*',
     initial_suffix='{{ dag_run.conf["initial_test_pdate" ]}}',
@@ -96,3 +97,34 @@ select_tags = CustomBigQueryOperator(
     sql='sql/select_tags.sql',
     destination_dataset_table='{0}.{1}.selected_tags'
         .format(Variable.get('gcp_project_id'), Variable.get('bigquery_dataset_id')))
+
+
+# *****************************************************************************
+# FLATTEN TAGS
+# *****************************************************************************
+train_flatten_tags = CustomBigQueryOperator(
+    task_id='train_flatten_tags',
+    dag=dag,
+    sql='sql/flatten_tags.sql',
+    destination_dataset_table='{0}.{1}.train_flattened_tags'
+        .format(Variable.get('gcp_project_id'), Variable.get('bigquery_dataset_id')),
+    params={'train_test': 'train'})
+
+
+test_flatten_tags = CustomBigQueryOperator(
+    task_id='test_flatten_tags',
+    dag=dag,
+    sql='sql/flatten_tags.sql',
+    destination_dataset_table='{0}.{1}.test_flattened_tags'
+        .format(Variable.get('gcp_project_id'), Variable.get('bigquery_dataset_id')),
+    params={'train_test': 'test'})
+
+
+# *****************************************************************************
+# RELATIONS BETWEEN TASKS
+# *****************************************************************************
+#train_titles_sensor
+[train_tagged_posts_sensor, tags_table_sensor] >> select_tags
+#test_titles_sensor
+[select_tags, train_tagged_posts_sensor] >> train_flatten_tags
+[select_tags, test_tagged_posts_sensor] >> test_flatten_tags
