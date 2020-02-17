@@ -121,10 +121,31 @@ test_flatten_tags = CustomBigQueryOperator(
 
 
 # *****************************************************************************
+# CONSTRUCT TRAIN AND TEST TABLES
+# *****************************************************************************
+train_construct_table = CustomBigQueryOperator(
+    task_id='train_table',
+    dag=dag,
+    sql='sql/construct_table.sql',
+    destination_dataset_table='{0}.{1}.train_table'
+        .format(Variable.get('gcp_project_id'), Variable.get('bigquery_dataset_id')),
+    params={'train_test': 'train'})
+
+
+test_construct_table = CustomBigQueryOperator(
+    task_id='test_table',
+    dag=dag,
+    sql='sql/construct_table.sql',
+    destination_dataset_table='{0}.{1}.test_table'
+        .format(Variable.get('gcp_project_id'), Variable.get('bigquery_dataset_id')),
+    params={'train_test': 'test'})
+
+
+# *****************************************************************************
 # RELATIONS BETWEEN TASKS
 # *****************************************************************************
-#train_titles_sensor
 [train_tagged_posts_sensor, tags_table_sensor] >> select_tags
-#test_titles_sensor
 [select_tags, train_tagged_posts_sensor] >> train_flatten_tags
 [select_tags, test_tagged_posts_sensor] >> test_flatten_tags
+[train_flatten_tags, train_titles_sensor] >> train_construct_table
+[test_flatten_tags, test_titles_sensor] >> test_construct_table
