@@ -6,7 +6,7 @@ from custom_airflow.operators import CustomGoogleCloudStorageDownloadDirectoryOp
 from custom_airflow.sensors import (BigQueryWildcardTableSuffixSensor,
                                     CustomBigQueryTableSensor)
 from airflow.models import Variable
-from jinja2 import Template
+import os
 
 
 default_args = {
@@ -124,7 +124,7 @@ test_flatten_tags = CustomBigQueryOperator(
 # CONSTRUCT TRAIN AND TEST TABLES
 # *****************************************************************************
 train_construct_table = CustomBigQueryOperator(
-    task_id='train_table',
+    task_id='train_construct_table',
     dag=dag,
     sql='sql/construct_table.sql',
     destination_dataset_table='{0}.{1}.train_table'
@@ -133,12 +133,33 @@ train_construct_table = CustomBigQueryOperator(
 
 
 test_construct_table = CustomBigQueryOperator(
-    task_id='test_table',
+    task_id='test_construct_table',
     dag=dag,
     sql='sql/construct_table.sql',
     destination_dataset_table='{0}.{1}.test_table'
         .format(Variable.get('gcp_project_id'), Variable.get('bigquery_dataset_id')),
     params={'train_test': 'test'})
+
+
+# *****************************************************************************
+# EXPORT TO GOOGLE CLOUD STORAGE
+# *****************************************************************************
+train_export_to_cloud_storage = CustomBigQueryToCloudStorageOperator(
+    task_id='train_export_to_cloud_storage',
+    dag=dag,
+    source_project_dataset_table="{{ task_instance.xcom_pull(task_ids='train_construct_table', key='table_uri') | replace('`', '') }}",
+    destination_cloud_storage_uris=[os.path.join(Variable.get('gcs_working_path'), 'train-table', '*')],
+    compression='NONE',
+    export_format='CSV')
+
+
+test_export_to_cloud_storage = CustomBigQueryToCloudStorageOperator(
+    task_id='test_export_to_cloud_storage',
+    dag=dag,
+    source_project_dataset_table="{{ task_instance.xcom_pull(task_ids='test_construct_table', key='table_uri') | replace('`', '') }}",
+    destination_cloud_storage_uris=[os.path.join(Variable.get('gcs_working_path'), 'test-table', '*')],
+    compression='NONE',
+    export_format='CSV')
 
 
 # *****************************************************************************
@@ -149,3 +170,5 @@ test_construct_table = CustomBigQueryOperator(
 [select_tags, test_tagged_posts_sensor] >> test_flatten_tags
 [train_flatten_tags, train_titles_sensor] >> train_construct_table
 [test_flatten_tags, test_titles_sensor] >> test_construct_table
+train_construct_table >> train_export_to_cloud_storage
+test_construct_table >> test_export_to_cloud_storage

@@ -18,7 +18,6 @@ class CustomBigQueryToCloudStorageOperator(BigQueryToCloudStorageOperator):
         task_instance = context['task_instance']
         task_instance.xcom_push('destination_cloud_storage_uris',
                                 f'`{self.destination_cloud_storage_uris}`')
-        context['templates_dict'] = self.templates_dict
         super().execute(context)
 
 
