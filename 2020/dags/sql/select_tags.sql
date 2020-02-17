@@ -24,36 +24,6 @@ WITH
   GROUP BY
     tag)
 SELECT
-  tag,
-  n
-FROM
-  tag_count
-ORDER BY
-  n DESC
-LIMIT
-  50
-),
-  tags AS (
-  SELECT
-    *
-  FROM
-    `jht-data-engineering-tests.tes_sandbox_us.tags`),
-  flattened_tags AS (
-  SELECT
-    tag
-  FROM
-    train_tags
-  JOIN
-    UNNEST(SPLIT(tags, '|')) AS tag),
-  tag_count AS (
-  SELECT
-    tag,
-    COUNT(*) AS n
-  FROM
-    flattened_tags
-  GROUP BY
-    tag)
-SELECT
   t1.id AS tag_id,
   t1.tag_name,
   n
