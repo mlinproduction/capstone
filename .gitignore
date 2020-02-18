@@ -41,3 +41,6 @@ models
 artefacts
 *.csv
 *.conf
+
+# Airflow home
+airflow-home/

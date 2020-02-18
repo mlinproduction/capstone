@@ -83,4 +83,5 @@ dependencies:
     - transformers==2.4.1
     - urllib3==1.25.8
     - wrapt==1.11.2
-
+    - apache-airflow[crypto,gcp]==1.10.7
+    - werkzeug==0.16.0

@@ -26,6 +26,7 @@ ARTEFACTS_PATH ?= train/data/artefacts/final/
 	$(PIP) install -e preprocessing/
 	$(PIP) install -e train/
 	$(PIP) install -e predict/
+	$(PIP) install -e custom_airflow/
 	$(NOSE) -v preprocessing/tests
 	$(NOSE) -v train/tests
 	$(NOSE) -v predict/tests
