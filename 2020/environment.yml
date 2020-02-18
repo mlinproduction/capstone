@@ -8,6 +8,7 @@ dependencies:
   - certifi=2019.11.28
   - click=7.0
   - flask=1.1.1
+  - flake8=3.7.9
   - itsdangerous=1.1.0
   - jinja2=2.11.1
   - joblib=0.14.1

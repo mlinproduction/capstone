@@ -1,6 +1,10 @@
 # ML in Production - Capstone 
 
-This repo corresponds to the course of [Machine Learning in Production](https://mlinproduction.github.io/). This code is done for educational purposes. As such, it is neither a real production code, nor a toy example easy to understand but useless. We tried to make it as similar as possible to real production systems, highlighting some parts and missing others to make it more readable. 
+
+This repo corresponds to the course of [Machine Learning in Production](https://mlinproduction.github.io/). 
+This code is done for educational purposes. As such, it is neither a real production code, nor a toy example easy to 
+understand but useless. We tried to make it as similar as possible to real production systems, highlighting some parts and missing
+ others to make it more readable. 
 
 ## 2020's Edition
 

@@ -14,7 +14,7 @@ PIP = $(CONDA_ROOT)/envs/ml_in_prod_capstone/bin/pip
 NOSE = $(CONDA_ROOT)/envs/ml_in_prod_capstone/bin/nosetests
 PYTHON = $(CONDA_ROOT)/envs/ml_in_prod_capstone/bin/python
 
-ARTEFACTS_PATH = train/data/artefacts/final/
+ARTEFACTS_PATH ?= train/data/artefacts/final/
 
 # *******************************************************************************************************************
 # Setup
@@ -57,7 +57,7 @@ $(DATASET_DEFAULT):
 download: $(DATASET_DEFAULT)
 
 $(ARTEFACTS_PATH): $(DATASET) .setup_done train/train/run.py
-	echo $(ARTEFACTS_PATH)
+	echo "Training model and saving into `$(ARTEFACTS_PATH)`"
 	$(PYTHON) train/train/run.py $(ARTEFACTS_PATH) $(DATASET) train/conf/train-conf.yml
 
 .PHONY: train
