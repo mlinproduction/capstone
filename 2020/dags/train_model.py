@@ -1,16 +1,19 @@
 from airflow import DAG
-from airflow.utils.dates import days_ago
 from custom_airflow.operators import CustomBigQueryOperator
 from custom_airflow.operators import CustomBigQueryToCloudStorageOperator
 from custom_airflow.operators import CustomGoogleCloudStorageDownloadDirectoryOperator
 from custom_airflow.sensors import (BigQueryWildcardTableSuffixSensor,
                                     CustomBigQueryTableSensor)
 from airflow.models import Variable
+from airflow.operators.python_operator import PythonOperator
+from train import train_production
 import os
+import datetime
+import json
 
 
 default_args = {
-    'start_date': days_ago(0),
+    'start_date': datetime.datetime.strptime('2020-02-01', '%Y-%m-%d'),
     'project_id': Variable.get('gcp_project_id'),
     'bigquery_conn_id': Variable.get('bigquery_conn_id'),
     'dataset_id': Variable.get('bigquery_dataset_id'),
@@ -183,6 +186,28 @@ test_download_to_local = CustomGoogleCloudStorageDownloadDirectoryOperator(
 
 
 # *****************************************************************************
+# TRAIN MODEL
+# *****************************************************************************
+def train_production_wrapper(model_path, train_dataset_paths,
+                             test_dataset_paths, train_params):
+    return train_production(model_path,
+                            eval(train_dataset_paths),
+                            test_dataset_paths,
+                            eval(train_params))
+
+
+train_model = PythonOperator(
+    task_id='train_model',
+    dag=dag,
+    python_callable=train_production_wrapper,
+    op_kwargs={
+        'model_path': '',
+        'train_dataset_paths': "{{ task_instance.xcom_pull(task_ids='train_download_to_local', key='downloaded_files') }}",
+        'test_dataset_paths': [],
+        'train_params': "{{ dag_run.conf['train_params'] }}"})
+
+
+# *****************************************************************************
 # RELATIONS BETWEEN TASKS
 # *****************************************************************************
 [train_tagged_posts_sensor, tags_table_sensor] >> select_tags
@@ -194,3 +219,4 @@ train_construct_table >> train_export_to_cloud_storage
 test_construct_table >> test_export_to_cloud_storage
 train_export_to_cloud_storage >> train_download_to_local
 test_export_to_cloud_storage >> test_download_to_local
+[train_download_to_local, test_download_to_local] >> train_model

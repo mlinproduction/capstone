@@ -9,6 +9,7 @@ from tensorflow.keras.layers import Dense
 
 from preprocessing.embeddings import embed
 from preprocessing.utils import LocalTextCategorizationDataset
+from preprocessing.utils_production import LocalLargeTextCategorizationDataset
 
 
 logger = logging.getLogger(__name__)
@@ -64,6 +65,34 @@ def train(model_path, dataset_path, train_params, add_timestamp):
     return scores[1], artefacts_path
 
 
+def train_production(model_path, train_dataset_paths, test_dataset_paths,
+                     train_params):
+    train_dataset = LocalLargeTextCategorizationDataset(
+        train_dataset_paths,
+        batch_size=train_params['batch_size'],
+        preprocess_text=embed)
+
+    test_dataset = LocalLargeTextCategorizationDataset(
+        test_dataset_paths,
+        batch_size=train_params['batch_size'],
+        preprocess_text=embed)
+
+    model = Sequential()
+    model.add(Dense(train_params['dense_dim'], activation='relu'))
+    model.add(Dense(train_params['num_labels'], activation='sigmoid'))
+    model.compile(loss='binary_crossentropy', optimizer='sgd', metrics=['accuracy'])
+
+    train_history = model.fit(
+        train_dataset.get_sequence(),
+        validation_data=test_dataset.get_sequence(),
+        epochs=train_params['epochs'],
+        verbose=train_params['verbose'],
+        workers=train_params['workers'],
+        use_multiprocessing=train_params['use_multiprocessing']
+    )
+    raise NotImplementedError('train_production not implemented')
+
+
 if __name__ == "__main__":
     import yaml
 
@@ -83,4 +112,3 @@ if __name__ == "__main__":
     logger.info(f"Training model with parameters: {train_params}")
 
     train(args.artefacts_path, args.dataset_path, train_params, args.add_timestamp)
-
