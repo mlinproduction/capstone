@@ -9,14 +9,12 @@ from airflow.operators.python_operator import PythonOperator
 from train import train_production
 import os
 import datetime
-import json
 
 
 default_args = {
     'start_date': datetime.datetime.strptime('2020-02-01', '%Y-%m-%d'),
     'project_id': Variable.get('gcp_project_id'),
     'bigquery_conn_id': Variable.get('bigquery_conn_id'),
-    'dataset_id': Variable.get('bigquery_dataset_id'),
     'write_disposition': 'WRITE_TRUNCATE',
     'allow_large_results': True,
     'use_legacy_sql': False,
@@ -40,6 +38,7 @@ dag = DAG(
 train_titles_sensor = BigQueryWildcardTableSuffixSensor(
     task_id='train_titles_sensor',
     dag=dag,
+    dataset_id=Variable.get('input_bigquery_dataset_id'),
     table_id='stackoverflow_posts_title_*',
     initial_suffix='{{ dag_run.conf["initial_train_pdate"] }}',
     final_suffix='{{ dag_run.conf["final_train_pdate"] }}',
@@ -52,6 +51,7 @@ train_titles_sensor = BigQueryWildcardTableSuffixSensor(
 train_tagged_posts_sensor = BigQueryWildcardTableSuffixSensor(
     task_id='train_tagged_posts_sensor',
     dag=dag,
+    dataset_id=Variable.get('input_bigquery_dataset_id'),
     table_id='stackoverflow_posts_tags_*',
     initial_suffix='{{ dag_run.conf["initial_train_pdate"] }}',
     final_suffix='{{ dag_run.conf["final_train_pdate"] }}',
@@ -64,6 +64,7 @@ train_tagged_posts_sensor = BigQueryWildcardTableSuffixSensor(
 test_titles_sensor = BigQueryWildcardTableSuffixSensor(
     task_id='test_titles_sensor',
     dag=dag,
+    dataset_id=Variable.get('input_bigquery_dataset_id'),
     table_id='stackoverflow_posts_title_*',
     initial_suffix='{{ dag_run.conf["initial_test_pdate"] }}',
     final_suffix='{{ dag_run.conf["final_test_pdate"] }}',
@@ -76,6 +77,7 @@ test_titles_sensor = BigQueryWildcardTableSuffixSensor(
 test_tagged_posts_sensor = BigQueryWildcardTableSuffixSensor(
     task_id='test_tagged_posts_sensor',
     dag=dag,
+    dataset_id=Variable.get('input_bigquery_dataset_id'),
     table_id='stackoverflow_posts_tags_*',
     initial_suffix='{{ dag_run.conf["initial_test_pdate" ]}}',
     final_suffix='{{ dag_run.conf["final_test_pdate"] }}',
@@ -88,6 +90,7 @@ test_tagged_posts_sensor = BigQueryWildcardTableSuffixSensor(
 tags_table_sensor = CustomBigQueryTableSensor(
     task_id='tags_table_sensor',
     dag=dag,
+    dataset_id=Variable.get('input_bigquery_dataset_id'),
     table_id='tags',
     timeout=60)
 
@@ -100,7 +103,7 @@ select_tags = CustomBigQueryOperator(
     dag=dag,
     sql='sql/select_tags.sql',
     destination_dataset_table='{0}.{1}.selected_tags'
-        .format(Variable.get('gcp_project_id'), Variable.get('bigquery_dataset_id')))
+        .format(Variable.get('gcp_project_id'), Variable.get('work_bigquery_dataset_id')))
 
 
 # *****************************************************************************
@@ -111,7 +114,7 @@ train_flatten_tags = CustomBigQueryOperator(
     dag=dag,
     sql='sql/flatten_tags.sql',
     destination_dataset_table='{0}.{1}.train_flattened_tags'
-        .format(Variable.get('gcp_project_id'), Variable.get('bigquery_dataset_id')),
+        .format(Variable.get('gcp_project_id'), Variable.get('work_bigquery_dataset_id')),
     params={'train_test': 'train'})
 
 
@@ -120,7 +123,7 @@ test_flatten_tags = CustomBigQueryOperator(
     dag=dag,
     sql='sql/flatten_tags.sql',
     destination_dataset_table='{0}.{1}.test_flattened_tags'
-        .format(Variable.get('gcp_project_id'), Variable.get('bigquery_dataset_id')),
+        .format(Variable.get('gcp_project_id'), Variable.get('work_bigquery_dataset_id')),
     params={'train_test': 'test'})
 
 
@@ -132,7 +135,7 @@ train_construct_table = CustomBigQueryOperator(
     dag=dag,
     sql='sql/construct_table.sql',
     destination_dataset_table='{0}.{1}.train_table'
-        .format(Variable.get('gcp_project_id'), Variable.get('bigquery_dataset_id')),
+        .format(Variable.get('gcp_project_id'), Variable.get('work_bigquery_dataset_id')),
     params={'train_test': 'train'})
 
 
@@ -141,7 +144,7 @@ test_construct_table = CustomBigQueryOperator(
     dag=dag,
     sql='sql/construct_table.sql',
     destination_dataset_table='{0}.{1}.test_table'
-        .format(Variable.get('gcp_project_id'), Variable.get('bigquery_dataset_id')),
+        .format(Variable.get('gcp_project_id'), Variable.get('work_bigquery_dataset_id')),
     params={'train_test': 'test'})
 
 
@@ -166,6 +169,15 @@ test_export_to_cloud_storage = CustomBigQueryToCloudStorageOperator(
     export_format='CSV')
 
 
+tags_export_to_cloud_storage = CustomBigQueryToCloudStorageOperator(
+    task_id='tags_export_to_cloud_storage',
+    dag=dag,
+    source_project_dataset_table="{{ task_instance.xcom_pull(task_ids='select_tags', key='table_uri') | replace('`', '') }}",
+    destination_cloud_storage_uris=['gs://' + os.path.join(Variable.get('gcs_bucket'), Variable.get('gcs_prefix'), 'tags', '*')],
+    compression='NONE',
+    export_format='CSV')
+
+
 # *****************************************************************************
 # DOWNLOAD TO LOCAL
 # *****************************************************************************
@@ -185,14 +197,24 @@ test_download_to_local = CustomGoogleCloudStorageDownloadDirectoryOperator(
     directory=Variable.get('local_working_dir'))
 
 
+tags_download_to_local = CustomGoogleCloudStorageDownloadDirectoryOperator(
+    task_id='tags_download_to_local',
+    dag=dag,
+    bucket=Variable.get('gcs_bucket'),
+    prefix=os.path.join(Variable.get('gcs_prefix'), 'tags/'),
+    directory=Variable.get('local_working_dir'))
+
+
 # *****************************************************************************
 # TRAIN MODEL
 # *****************************************************************************
 def train_production_wrapper(model_path, train_dataset_paths,
-                             test_dataset_paths, train_params):
+                             test_dataset_paths, labels_paths, train_params):
+    print(train_params)
     return train_production(model_path,
                             eval(train_dataset_paths),
                             test_dataset_paths,
+                            labels_paths[0],
                             eval(train_params))
 
 
@@ -203,7 +225,8 @@ train_model = PythonOperator(
     op_kwargs={
         'model_path': '',
         'train_dataset_paths': "{{ task_instance.xcom_pull(task_ids='train_download_to_local', key='downloaded_files') }}",
-        'test_dataset_paths': [],
+        'test_dataset_paths': "{{ task_instance.xcom_pull(task_ids='test_download_to_local', key='downloaded_files') }}",
+        'labels_paths': "{{ task_instance.xcom_pull(task_ids='tags_download_to_local', key='downloaded_files') }}",
         'train_params': "{{ dag_run.conf['train_params'] }}"})
 
 
@@ -219,4 +242,6 @@ train_construct_table >> train_export_to_cloud_storage
 test_construct_table >> test_export_to_cloud_storage
 train_export_to_cloud_storage >> train_download_to_local
 test_export_to_cloud_storage >> test_download_to_local
-[train_download_to_local, test_download_to_local] >> train_model
+select_tags >> tags_export_to_cloud_storage
+tags_export_to_cloud_storage >> tags_download_to_local
+[train_download_to_local, test_download_to_local, tags_download_to_local] >> train_model

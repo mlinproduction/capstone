@@ -66,20 +66,22 @@ def train(model_path, dataset_path, train_params, add_timestamp):
 
 
 def train_production(model_path, train_dataset_paths, test_dataset_paths,
-                     train_params):
+                     labels_path, train_params):
     train_dataset = LocalLargeTextCategorizationDataset(
         train_dataset_paths,
+        labels_path,
         batch_size=train_params['batch_size'],
         preprocess_text=embed)
 
     test_dataset = LocalLargeTextCategorizationDataset(
         test_dataset_paths,
+        labels_path,
         batch_size=train_params['batch_size'],
         preprocess_text=embed)
 
     model = Sequential()
     model.add(Dense(train_params['dense_dim'], activation='relu'))
-    model.add(Dense(train_params['num_labels'], activation='sigmoid'))
+    model.add(Dense(train_params['num_labels'] + 1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='sgd', metrics=['accuracy'])
 
     train_history = model.fit(

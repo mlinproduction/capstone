@@ -23,18 +23,20 @@ WITH
   FROM
     flattened_tags
   GROUP BY
-    tag)
+    tag),
+  ordered_tag_count AS (
+  SELECT
+    *,
+    ROW_NUMBER() OVER(ORDER BY n DESC) AS tag_order
+  FROM
+    tag_count)
 SELECT
-  t1.id AS tag_id,
-  t1.tag_name,
-  n
+  DISTINCT IF(tag_order <= {{ dag_run.conf['train_params']['num_labels'] }}, t1.id, NULL) AS tag_id,
+  IF(tag_order <= {{ dag_run.conf['train_params']['num_labels'] }}, t1.tag_name, '(other)') AS tag_name,
+  IF(tag_order <= {{ dag_run.conf['train_params']['num_labels'] }}, t2.n, NULL) AS n
 FROM
   tags AS t1
 JOIN
-  tag_count AS t2
+  ordered_tag_count AS t2
 ON
   t1.tag_name = t2.tag
-ORDER BY
-  n DESC
-LIMIT
-  50
