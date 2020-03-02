@@ -5,6 +5,7 @@ import datetime
 
 from .titles_sensor import TitlesSensor
 from .tagged_posts_sensor import TaggedPostsSensor
+from .tags_table_sensor import TagsTableSensor
 
 
 default_args = {
@@ -31,16 +32,7 @@ test_titles_sensor = TitlesSensor(dag, train=False)
 train_tagged_posts_sensor = TaggedPostsSensor(dag, train=True)
 test_tagged_posts_sensor = TaggedPostsSensor(dag, train=False)
 
-
-# *****************************************************************************
-# TAGS TABLE SENSOR
-# *****************************************************************************
-# tags_table_sensor = CustomBigQueryTableSensor(
-#     task_id='tags_table_sensor',
-#     dag=dag,
-#     dataset_id=Variable.get('input_bigquery_dataset_id'),
-#     table_id='tags',
-#     timeout=60)
+tags_table_sensor = TagsTableSensor(dag)
 
 
 # *****************************************************************************
