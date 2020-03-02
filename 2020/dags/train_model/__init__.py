@@ -7,6 +7,7 @@ from .titles_sensor import TitlesSensor
 from .tagged_posts_sensor import TaggedPostsSensor
 from .tags_table_sensor import TagsTableSensor
 from .select_tags import SelectTags
+from .filter_and_flatten_tags import FilterAndFlattenTags
 
 
 default_args = {
@@ -36,33 +37,13 @@ test_tagged_posts_sensor = TaggedPostsSensor(dag, train=False)
 tags_table_sensor = TagsTableSensor(dag)
 
 select_tags = SelectTags(dag)
-#[train_tagged_posts_sensor, tags_table_sensor] >> select_tags
-[tags_table_sensor, train_tagged_posts_sensor] >> select_tags
+[train_tagged_posts_sensor, tags_table_sensor] >> select_tags
 
-# *****************************************************************************
-# SELECT TAGS
-# *****************************************************************************
+train_filter_and_flatten_tags = FilterAndFlattenTags(dag, train=True)
+[select_tags, train_tagged_posts_sensor] >> train_filter_and_flatten_tags
 
-
-# *****************************************************************************
-# FLATTEN TAGS
-# *****************************************************************************
-# train_flatten_tags = CustomBigQueryOperator(
-#     task_id='train_flatten_tags',
-#     dag=dag,
-#     sql='sql/flatten_tags.sql',
-#     destination_dataset_table='{0}.{1}.train_flattened_tags'
-#         .format(Variable.get('gcp_project_id'), Variable.get('work_bigquery_dataset_id')),
-#     params={'train_test': 'train'})
-
-
-# test_flatten_tags = CustomBigQueryOperator(
-#     task_id='test_flatten_tags',
-#     dag=dag,
-#     sql='sql/flatten_tags.sql',
-#     destination_dataset_table='{0}.{1}.test_flattened_tags'
-#         .format(Variable.get('gcp_project_id'), Variable.get('work_bigquery_dataset_id')),
-#     params={'train_test': 'test'})
+test_filter_and_flatten_tags = FilterAndFlattenTags(dag, train=False)
+[select_tags, test_tagged_posts_sensor] >> test_filter_and_flatten_tags
 
 
 # *****************************************************************************
@@ -172,8 +153,6 @@ select_tags = SelectTags(dag)
 # RELATIONS BETWEEN TASKS
 # *****************************************************************************
 
-# [select_tags, train_tagged_posts_sensor] >> train_flatten_tags
-# [select_tags, test_tagged_posts_sensor] >> test_flatten_tags
 # [train_flatten_tags, train_titles_sensor] >> train_construct_table
 # [test_flatten_tags, test_titles_sensor] >> test_construct_table
 # train_construct_table >> train_export_to_cloud_storage
