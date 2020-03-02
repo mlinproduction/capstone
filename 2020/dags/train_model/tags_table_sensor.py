@@ -1,8 +1,8 @@
-from custom_airflow.sensors import BigQueryTableSensor
+from custom_airflow.sensors import CustomBigQueryTableSensor
 from airflow.models import Variable
 
 
-class TagsTableSensor(BigQueryTableSensor):
+class TagsTableSensor(CustomBigQueryTableSensor):
     def __init__(self, dag, *args, **kwargs):
         task_id = 'tags_table_sensor'
         dataset_id = Variable.get('input_bigquery_dataset_id')

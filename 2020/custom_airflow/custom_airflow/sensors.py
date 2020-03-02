@@ -33,8 +33,8 @@ class BigQueryWildcardTableSuffixSensor(BigQueryTableSensor):
 
 class CustomBigQueryTableSensor(BigQueryTableSensor):
     def poke(self, context):
-        table_uri = '{0}.{1}.{2}'\
-            .format(self.project_id, self.dataset_id, self.table_id)
+        table_uri = '{0}.{1}.{2}'.format(self.project_id, self.dataset_id,
+                                         self.table_id)
 
         output_table_name = '`{0}`'.format(table_uri)
         task_instance = context['task_instance']

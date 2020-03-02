@@ -6,6 +6,7 @@ import datetime
 from .titles_sensor import TitlesSensor
 from .tagged_posts_sensor import TaggedPostsSensor
 from .tags_table_sensor import TagsTableSensor
+from .select_tags import SelectTags
 
 
 default_args = {
@@ -34,16 +35,13 @@ test_tagged_posts_sensor = TaggedPostsSensor(dag, train=False)
 
 tags_table_sensor = TagsTableSensor(dag)
 
+select_tags = SelectTags(dag)
+#[train_tagged_posts_sensor, tags_table_sensor] >> select_tags
+[tags_table_sensor, train_tagged_posts_sensor] >> select_tags
 
 # *****************************************************************************
 # SELECT TAGS
 # *****************************************************************************
-# select_tags = CustomBigQueryOperator(
-#     task_id='select_tags',
-#     dag=dag,
-#     sql='sql/select_tags.sql',
-#     destination_dataset_table='{0}.{1}.selected_tags'
-#         .format(Variable.get('gcp_project_id'), Variable.get('work_bigquery_dataset_id')))
 
 
 # *****************************************************************************
@@ -173,7 +171,7 @@ tags_table_sensor = TagsTableSensor(dag)
 # *****************************************************************************
 # RELATIONS BETWEEN TASKS
 # *****************************************************************************
-# [train_tagged_posts_sensor, tags_table_sensor] >> select_tags
+
 # [select_tags, train_tagged_posts_sensor] >> train_flatten_tags
 # [select_tags, test_tagged_posts_sensor] >> test_flatten_tags
 # [train_flatten_tags, train_titles_sensor] >> train_construct_table

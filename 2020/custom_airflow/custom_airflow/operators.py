@@ -7,9 +7,16 @@ import os
 
 
 class CustomBigQueryOperator(BigQueryOperator):
+    def get_custom_context(self, context):
+        return context
+
+    def render_template(self, content, context, jinja_env=None, seen_oids=None):
+        context = self.get_custom_context(context)
+        return super().render_template(content, context, jinja_env, seen_oids)
+
     def execute(self, context):
         task_instance = context['task_instance']
-        task_instance.xcom_push('table_uri', f'`{self.destination_dataset_table}`')
+        task_instance.xcom_push('output_table_name', f'`{self.destination_dataset_table}`')
         super().execute(context)
 
 

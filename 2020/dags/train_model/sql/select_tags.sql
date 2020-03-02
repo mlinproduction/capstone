@@ -3,12 +3,12 @@ WITH
   SELECT
     *
   FROM
-    {{ task_instance.xcom_pull(task_ids='train_tagged_posts_sensor', key='table_uri') }}),
+    {{ input_tables[0] }}),
   tags AS (
   SELECT
     *
   FROM
-    {{ task_instance.xcom_pull(task_ids='tags_table_sensor', key='table_uri') }}),
+    {{ input_tables[1] }}),
   flattened_tags AS (
   SELECT
     tag
@@ -31,9 +31,9 @@ WITH
   FROM
     tag_count)
 SELECT
-  DISTINCT IF(tag_order <= {{ dag_run.conf['train_params']['num_labels'] }}, t1.id, NULL) AS tag_id,
-  IF(tag_order <= {{ dag_run.conf['train_params']['num_labels'] }}, t1.tag_name, '(other)') AS tag_name,
-  IF(tag_order <= {{ dag_run.conf['train_params']['num_labels'] }}, t2.n, NULL) AS n
+  DISTINCT IF(tag_order <= {{ num_labels }}, t1.id, NULL) AS tag_id,
+  IF(tag_order <= {{ num_labels }}, t1.tag_name, '(other)') AS tag_name,
+  IF(tag_order <= {{ num_labels }}, t2.n, NULL) AS n
 FROM
   tags AS t1
 JOIN
