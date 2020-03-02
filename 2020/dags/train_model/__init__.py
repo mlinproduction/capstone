@@ -4,6 +4,7 @@ import datetime
 
 
 from .titles_sensor import TitlesSensor
+from .tagged_posts_sensor import TaggedPostsSensor
 
 
 default_args = {
@@ -27,32 +28,8 @@ dag = DAG(
 train_titles_sensor = TitlesSensor(dag, train=True)
 test_titles_sensor = TitlesSensor(dag, train=False)
 
-
-# *****************************************************************************
-# TRAIN TAGS SENSOR
-# *****************************************************************************
-# train_tagged_posts_sensor = BigQueryWildcardTableSuffixSensor(
-#     task_id='train_tagged_posts_sensor',
-#     dag=dag,
-#     dataset_id=Variable.get('input_bigquery_dataset_id'),
-#     table_id='stackoverflow_posts_tags_*',
-#     initial_suffix='{{ dag_run.conf["initial_train_pdate"] }}',
-#     final_suffix='{{ dag_run.conf["final_train_pdate"] }}',
-#     timeout=60)
-
-
-
-# *****************************************************************************
-# TEST TAGS SENSOR
-# *****************************************************************************
-# test_tagged_posts_sensor = BigQueryWildcardTableSuffixSensor(
-#     task_id='test_tagged_posts_sensor',
-#     dag=dag,
-#     dataset_id=Variable.get('input_bigquery_dataset_id'),
-#     table_id='stackoverflow_posts_tags_*',
-#     initial_suffix='{{ dag_run.conf["initial_test_pdate" ]}}',
-#     final_suffix='{{ dag_run.conf["final_test_pdate"] }}',
-#     timeout=60)
+train_tagged_posts_sensor = TaggedPostsSensor(dag, train=True)
+test_tagged_posts_sensor = TaggedPostsSensor(dag, train=False)
 
 
 # *****************************************************************************
