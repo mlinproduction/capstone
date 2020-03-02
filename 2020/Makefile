@@ -86,6 +86,10 @@ flask-server-docker: .docker_build ## Run Flask app through its Docker container
 flask-server-docker-debug: .docker_build ## Run Flask app through its Docker container in DEBUG mode
 	docker run -it -p 5000:5000 -v ml_in_prod_capstone:v1.0
 
+.PHONY: deploy_dags
+deploy_dags: ## make AIRFLOW_DAGS_FOLDER=/path/to/airflow/dags deploy_dags
+	cp -r dags/* $(AIRFLOW_DAGS_FOLDER)/
+
 .DEFAULT_GOAL := help
 .PHONY: help
 help: ## Displays makefile commands
