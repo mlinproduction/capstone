@@ -1,16 +1,14 @@
-{% set flattened_tags_sensor = params['train_test'] ~ '_flatten_tags' %}
-{% set titles_sensor = params['train_test'] ~ '_titles_sensor' %}
 WITH
   flattened_tags AS (
   SELECT
     *
   FROM
-    {{ task_instance.xcom_pull(task_ids=flattened_tags_sensor, key='table_uri') }}),
+    {{ input_tables[0] }}),
   titles AS (
   SELECT
     *
   FROM
-    {{ task_instance.xcom_pull(task_ids=titles_sensor, key='table_uri') }})
+    {{ input_tables[1] }})
 SELECT
   t1.*,
   title

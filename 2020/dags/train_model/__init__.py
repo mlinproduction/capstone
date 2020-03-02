@@ -8,6 +8,7 @@ from .tagged_posts_sensor import TaggedPostsSensor
 from .tags_table_sensor import TagsTableSensor
 from .select_tags import SelectTags
 from .filter_and_flatten_tags import FilterAndFlattenTags
+from .construct_table import ConstructTable
 
 
 default_args = {
@@ -45,6 +46,11 @@ train_filter_and_flatten_tags = FilterAndFlattenTags(dag, train=True)
 test_filter_and_flatten_tags = FilterAndFlattenTags(dag, train=False)
 [select_tags, test_tagged_posts_sensor] >> test_filter_and_flatten_tags
 
+train_construct_table = ConstructTable(dag, train=True)
+[train_filter_and_flatten_tags, train_titles_sensor] >> train_construct_table
+
+test_construct_table = ConstructTable(dag, train=False)
+[test_filter_and_flatten_tags, test_titles_sensor] >> test_construct_table
 
 # *****************************************************************************
 # CONSTRUCT TRAIN AND TEST TABLES
@@ -153,8 +159,6 @@ test_filter_and_flatten_tags = FilterAndFlattenTags(dag, train=False)
 # RELATIONS BETWEEN TASKS
 # *****************************************************************************
 
-# [train_flatten_tags, train_titles_sensor] >> train_construct_table
-# [test_flatten_tags, test_titles_sensor] >> test_construct_table
 # train_construct_table >> train_export_to_cloud_storage
 # test_construct_table >> test_export_to_cloud_storage
 # train_export_to_cloud_storage >> train_download_to_local
