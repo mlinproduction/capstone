@@ -9,6 +9,8 @@ from .tags_table_sensor import TagsTableSensor
 from .select_tags import SelectTags
 from .filter_and_flatten_tags import FilterAndFlattenTags
 from .construct_table import ConstructTable
+from .export_to_cloud_storage import (ExportToCloudStorage,
+                                      ExportTagsToCloudStorage)
 
 
 default_args = {
@@ -52,55 +54,15 @@ train_construct_table = ConstructTable(dag, train=True)
 test_construct_table = ConstructTable(dag, train=False)
 [test_filter_and_flatten_tags, test_titles_sensor] >> test_construct_table
 
-# *****************************************************************************
-# CONSTRUCT TRAIN AND TEST TABLES
-# *****************************************************************************
-# train_construct_table = CustomBigQueryOperator(
-#     task_id='train_construct_table',
-#     dag=dag,
-#     sql='sql/construct_table.sql',
-#     destination_dataset_table='{0}.{1}.train_table'
-#         .format(Variable.get('gcp_project_id'), Variable.get('work_bigquery_dataset_id')),
-#     params={'train_test': 'train'})
-# 
-# 
-# test_construct_table = CustomBigQueryOperator(
-#     task_id='test_construct_table',
-#     dag=dag,
-#     sql='sql/construct_table.sql',
-#     destination_dataset_table='{0}.{1}.test_table'
-#         .format(Variable.get('gcp_project_id'), Variable.get('work_bigquery_dataset_id')),
-#     params={'train_test': 'test'})
+train_export_to_cloud_storage = ExportToCloudStorage(dag, train=True)
+train_construct_table >> train_export_to_cloud_storage
 
+test_export_to_cloud_storage = ExportToCloudStorage(dag, train=False)
+test_construct_table >> test_export_to_cloud_storage
 
-# *****************************************************************************
-# EXPORT TO GOOGLE CLOUD STORAGE
-# *****************************************************************************
-# train_export_to_cloud_storage = CustomBigQueryToCloudStorageOperator(
-#     task_id='train_export_to_cloud_storage',
-#     dag=dag,
-#     source_project_dataset_table="{{ task_instance.xcom_pull(task_ids='train_construct_table', key='table_uri') | replace('`', '') }}",
-#     destination_cloud_storage_uris=['gs://' + os.path.join(Variable.get('gcs_bucket'), Variable.get('gcs_prefix'), 'train-table', '*')],
-#     compression='NONE',
-#     export_format='CSV')
-# 
-# 
-# test_export_to_cloud_storage = CustomBigQueryToCloudStorageOperator(
-#     task_id='test_export_to_cloud_storage',
-#     dag=dag,
-#     source_project_dataset_table="{{ task_instance.xcom_pull(task_ids='test_construct_table', key='table_uri') | replace('`', '') }}",
-#     destination_cloud_storage_uris=['gs://' + os.path.join(Variable.get('gcs_bucket'), Variable.get('gcs_prefix'), 'test-table', '*')],
-#     compression='NONE',
-#     export_format='CSV')
-# 
-# 
-# tags_export_to_cloud_storage = CustomBigQueryToCloudStorageOperator(
-#     task_id='tags_export_to_cloud_storage',
-#     dag=dag,
-#     source_project_dataset_table="{{ task_instance.xcom_pull(task_ids='select_tags', key='table_uri') | replace('`', '') }}",
-#     destination_cloud_storage_uris=['gs://' + os.path.join(Variable.get('gcs_bucket'), Variable.get('gcs_prefix'), 'tags', '*')],
-#     compression='NONE',
-#     export_format='CSV')
+tags_export_to_cloud_storage = ExportTagsToCloudStorage(dag)
+select_tags >> tags_export_to_cloud_storage
+
 
 
 # *****************************************************************************
@@ -159,10 +121,8 @@ test_construct_table = ConstructTable(dag, train=False)
 # RELATIONS BETWEEN TASKS
 # *****************************************************************************
 
-# train_construct_table >> train_export_to_cloud_storage
-# test_construct_table >> test_export_to_cloud_storage
 # train_export_to_cloud_storage >> train_download_to_local
 # test_export_to_cloud_storage >> test_download_to_local
-# select_tags >> tags_export_to_cloud_storage
+
 # tags_export_to_cloud_storage >> tags_download_to_local
 # [train_download_to_local, test_download_to_local, tags_download_to_local] >> train_model
