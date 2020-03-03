@@ -11,6 +11,7 @@ from .filter_and_flatten_tags import FilterAndFlattenTags
 from .construct_table import ConstructTable
 from .export_to_cloud_storage import (ExportToCloudStorage,
                                       ExportTagsToCloudStorage)
+from .download_to_local import (DownloadToLocal, TagsDownloadToLocal)
 
 
 default_args = {
@@ -63,33 +64,14 @@ test_construct_table >> test_export_to_cloud_storage
 tags_export_to_cloud_storage = ExportTagsToCloudStorage(dag)
 select_tags >> tags_export_to_cloud_storage
 
+train_download_to_local = DownloadToLocal(dag, train=True)
+train_export_to_cloud_storage >> train_download_to_local
 
+test_download_to_local = DownloadToLocal(dag, train=False)
+test_export_to_cloud_storage >> test_download_to_local
 
-# *****************************************************************************
-# DOWNLOAD TO LOCAL
-# *****************************************************************************
-# train_download_to_local = CustomGoogleCloudStorageDownloadDirectoryOperator(
-#     task_id='train_download_to_local',
-#     dag=dag,
-#     bucket=Variable.get('gcs_bucket'),
-#     prefix=os.path.join(Variable.get('gcs_prefix'), 'train-table/'),
-#     directory=Variable.get('local_working_dir'))
-# 
-# 
-# test_download_to_local = CustomGoogleCloudStorageDownloadDirectoryOperator(
-#     task_id='test_download_to_local',
-#     dag=dag,
-#     bucket=Variable.get('gcs_bucket'),
-#     prefix=os.path.join(Variable.get('gcs_prefix'), 'test-table/'),
-#     directory=Variable.get('local_working_dir'))
-# 
-# 
-# tags_download_to_local = CustomGoogleCloudStorageDownloadDirectoryOperator(
-#     task_id='tags_download_to_local',
-#     dag=dag,
-#     bucket=Variable.get('gcs_bucket'),
-#     prefix=os.path.join(Variable.get('gcs_prefix'), 'tags/'),
-#     directory=Variable.get('local_working_dir'))
+tags_download_to_local = TagsDownloadToLocal(dag)
+tags_export_to_cloud_storage >> tags_download_to_local
 
 
 # *****************************************************************************
@@ -121,8 +103,5 @@ select_tags >> tags_export_to_cloud_storage
 # RELATIONS BETWEEN TASKS
 # *****************************************************************************
 
-# train_export_to_cloud_storage >> train_download_to_local
-# test_export_to_cloud_storage >> test_download_to_local
 
-# tags_export_to_cloud_storage >> tags_download_to_local
 # [train_download_to_local, test_download_to_local, tags_download_to_local] >> train_model

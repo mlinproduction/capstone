@@ -7,9 +7,10 @@ class ExportToCloudStorage(CustomBigQueryToCloudStorageOperator):
     def __init__(self, dag, train=True, *args, **kwargs):
         task_id = ('train' if train else 'test') + '_export_to_cloud_storage'
         source_project_dataset_table = \
-            """{{{{ task_instance.xcom_pull(task_ids='{0}_construct_table',
-                                          key='output_table_name')
-                  | replace('`', '') }}}}""".format('train' if train else 'test')
+            """{{{{ task_instance.xcom_pull(
+                        task_ids='{0}_construct_table',
+                        key='output_table_name')
+                    | replace('`', '') }}}}""".format('train' if train else 'test')
         destination_cloud_storage_uris =\
             ['gs://' + os.path.join(Variable.get('gcs_bucket'),
                                     Variable.get('gcs_prefix'),
