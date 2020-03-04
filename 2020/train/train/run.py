@@ -30,7 +30,7 @@ def train(model_path, dataset_path, train_params, add_timestamp):
     logger.info(dataset)
 
     model = Sequential()
-    model.add(Dense(train_params['dense_dim'], activation='relu'))
+    model.add(Dense(train_params['dense_dim'], activation='relu', input_shape=(768, )))
     model.add(Dense(dataset.get_num_labels(), activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='sgd', metrics=['accuracy'])
 
