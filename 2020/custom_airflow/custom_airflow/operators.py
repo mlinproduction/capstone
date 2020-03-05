@@ -7,9 +7,16 @@ import os
 
 
 class CustomBigQueryOperator(BigQueryOperator):
+    def get_custom_context(self, context):
+        return context
+
+    def render_template(self, content, context, jinja_env=None, seen_oids=None):
+        context = self.get_custom_context(context)
+        return super().render_template(content, context, jinja_env, seen_oids)
+
     def execute(self, context):
         task_instance = context['task_instance']
-        task_instance.xcom_push('table_uri', f'`{self.destination_dataset_table}`')
+        task_instance.xcom_push('output_table_name', f'`{self.destination_dataset_table}`')
         super().execute(context)
 
 
@@ -17,7 +24,7 @@ class CustomBigQueryToCloudStorageOperator(BigQueryToCloudStorageOperator):
     def execute(self, context):
         task_instance = context['task_instance']
         task_instance.xcom_push('destination_cloud_storage_uris',
-                                f'`{self.destination_cloud_storage_uris}`')
+                                f'{self.destination_cloud_storage_uris}')
         super().execute(context)
 
 
@@ -54,11 +61,21 @@ class CustomGoogleCloudStorageDownloadDirectoryOperator(BaseOperator):
         downloaded_files = []
         for object in hook.list(bucket=self.bucket, prefix=self.prefix):
             self.log.info('Downloading object: %s', object)
-            filename = os.path.join(self.directory, object.replace('/', '_'))
+            filename = os.path.join(self.directory, object)
+            self.create_dir_if_not_exists(os.path.dirname(filename))
             hook.download(bucket=self.bucket,
                           object=object,
                           filename=filename)
             downloaded_files.append(filename)
 
+        if len(downloaded_files) == 0:
+            self.log.warning('No objects found on gs://{}/{}'
+                             .format(self.bucket, self.prefix))
+
         task_instance = context['task_instance']
         task_instance.xcom_push('downloaded_files', downloaded_files)
+
+    @staticmethod
+    def create_dir_if_not_exists(directory):
+        if not os.path.exists(directory):
+            os.makedirs(directory)

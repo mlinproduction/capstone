@@ -1,15 +1,14 @@
-{% set tagged_posts_sensor = params['train_test'] ~ '_tagged_posts_sensor' %}
 WITH
   selected_tags AS (
   SELECT
     *
   FROM
-    {{ task_instance.xcom_pull(task_ids='select_tags', key='table_uri') }}),
+    {{ input_tables[0] }}),
   tagged_posts AS (
   SELECT
     *
   FROM
-    {{ task_instance.xcom_pull(task_ids=tagged_posts_sensor, key='table_uri') }}),
+    {{ input_tables[1] }}),
   flattened_and_filtered_tags AS (
   SELECT
     t1.id AS post_id,

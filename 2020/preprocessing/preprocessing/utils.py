@@ -168,4 +168,3 @@ class LocalTextCategorizationDataset(BaseTextCategorizationDataset):
         # When we reach the max num batches, we start anew
         self.test_batch_index = (self.test_batch_index + 1) % self._get_num_test_batches()
         return next_x, next_y
-
