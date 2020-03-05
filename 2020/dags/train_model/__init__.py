@@ -12,6 +12,7 @@ from .construct_table import ConstructTable
 from .export_to_cloud_storage import (ExportToCloudStorage,
                                       ExportTagsToCloudStorage)
 from .download_to_local import (DownloadToLocal, TagsDownloadToLocal)
+from .train_model import TrainModel
 
 
 default_args = {
@@ -73,35 +74,5 @@ test_export_to_cloud_storage >> test_download_to_local
 tags_download_to_local = TagsDownloadToLocal(dag)
 tags_export_to_cloud_storage >> tags_download_to_local
 
-
-# *****************************************************************************
-# TRAIN MODEL
-# *****************************************************************************
-# def train_production_wrapper(model_path, train_dataset_paths,
-#                              test_dataset_paths, labels_paths, train_params):
-#     print(train_params)
-#     return train_production(model_path,
-#                             eval(train_dataset_paths),
-#                             test_dataset_paths,
-#                             labels_paths[0],
-#                             eval(train_params))
-# 
-# 
-# train_model = PythonOperator(
-#     task_id='train_model',
-#     dag=dag,
-#     python_callable=train_production_wrapper,
-#     op_kwargs={
-#         'model_path': '',
-#         'train_dataset_paths': "{{ task_instance.xcom_pull(task_ids='train_download_to_local', key='downloaded_files') }}",
-#         'test_dataset_paths': "{{ task_instance.xcom_pull(task_ids='test_download_to_local', key='downloaded_files') }}",
-#         'labels_paths': "{{ task_instance.xcom_pull(task_ids='tags_download_to_local', key='downloaded_files') }}",
-#         'train_params': "{{ dag_run.conf['train_params'] }}"})
-
-
-# *****************************************************************************
-# RELATIONS BETWEEN TASKS
-# *****************************************************************************
-
-
-# [train_download_to_local, test_download_to_local, tags_download_to_local] >> train_model
+train_model = TrainModel(dag)
+[train_download_to_local, test_download_to_local, tags_download_to_local] >> train_model

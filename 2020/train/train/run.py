@@ -3,6 +3,7 @@ import json
 import argparse
 import time
 import logging
+import pandas as pd
 
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
@@ -67,21 +68,26 @@ def train(model_path, dataset_path, train_params, add_timestamp):
 
 def train_production(model_path, train_dataset_paths, test_dataset_paths,
                      labels_path, train_params):
+    limit_train = train_params['limit'] if 'limit' in train_params else None
+    limit_test = .3 * limit_train / .7 if limit_train else None
+
     train_dataset = LocalLargeTextCategorizationDataset(
         train_dataset_paths,
         labels_path,
         batch_size=train_params['batch_size'],
-        preprocess_text=embed)
+        preprocess_text=embed,
+        limit=limit_train)
 
     test_dataset = LocalLargeTextCategorizationDataset(
         test_dataset_paths,
         labels_path,
         batch_size=train_params['batch_size'],
-        preprocess_text=embed)
+        preprocess_text=embed,
+        limit=limit_test)
 
     model = Sequential()
     model.add(Dense(train_params['dense_dim'], activation='relu'))
-    model.add(Dense(train_params['num_labels'] + 1, activation='sigmoid'))
+    model.add(Dense(len(train_dataset.label_list), activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='sgd', metrics=['accuracy'])
 
     train_history = model.fit(
@@ -92,7 +98,21 @@ def train_production(model_path, train_dataset_paths, test_dataset_paths,
         workers=train_params['workers'],
         use_multiprocessing=train_params['use_multiprocessing']
     )
-    raise NotImplementedError('train_production not implemented')
+
+    scores = model.evaluate(test_dataset.get_sequence(), verbose=0)
+    logger.info("Test Accuracy: {:.2f}".format(scores[1] * 100))
+
+    os.makedirs(model_path, exist_ok=True)
+
+    model.save(os.path.join(model_path, "model.h5"))
+
+    with open(os.path.join(model_path, "params.json"), "w") as f:
+        json.dump(train_params, f)
+
+    # train_history.history is not JSON-serializable because it contains numpy arrays
+    serializable_hist = {k: [float(e) for e in v] for k, v in train_history.history.items()}
+    with open(os.path.join(model_path, "train_output.json"), "w") as f:
+        json.dump(serializable_hist, f)
 
 
 if __name__ == "__main__":
