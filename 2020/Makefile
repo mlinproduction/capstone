@@ -71,18 +71,23 @@ train: $(ARTEFACTS_PATH) ## Trains a model to predict tags for stack overflow po
 # Text you want to use for testing, provide via `make CMD TEXT="abcd"`
 TEXT ?= ruby on rails: how to change BG color of options in select list, ruby-on-rails
 
+.PHONY: predict-test
 predict-test: .setup_done $(ARTEFACTS_PATH) ## Calling predict from terminal
 	$(PYTHON) predict/predict/run.py $(ARTEFACTS_PATH) --text="$(TEXT)"
 
+.PHONY: flask-server-local
 flask-server-local: .setup_done $(ARTEFACTS_PATH) ## Starts flask server and passes model artefacts through an environment variable
 	ARTEFACTS_PATH=$(ARTEFACTS_PATH) python predict/predict/app.py
 
+.PHONY: request-test
 request-test: ## Make a test POST request to flask server (needs to be running, for example having executed flask-server-local)
 	curl -v http://0.0.0.0:5000/tag/predict/ -d text="$(TEXT)"
 
+.PHONY: flask-server-docker
 flask-server-docker: .docker_build ## Run Flask app through its Docker container
 	docker run -p 5000:5000  ml_in_prod_capstone:v1.0
 
+.PHONY: flask-server-docker-debug
 flask-server-docker-debug: .docker_build ## Run Flask app through its Docker container in DEBUG mode
 	docker run -it -p 5000:5000 -v ml_in_prod_capstone:v1.0
 
